@@ -5,6 +5,7 @@ from discord.ext import commands
 import random
 import data.pokemondata as pokemondata
 import data.token as TOKEN
+import data.choosepokemon as choosepokemon
 
 description = '''An example bot to showcase the discord.ext.commands extension
 module.
@@ -17,7 +18,6 @@ intents.message_content = True
 
 bot = commands.Bot(command_prefix=f"<@{1095362700617461930}>" +  " ", description=description, intents=intents)
 
-
 @bot.event
 async def on_ready():
     print(f'Logged in as {bot.user} (ID: {bot.user.id})')
@@ -25,11 +25,31 @@ async def on_ready():
     print('------')
 
 
-@bot.command()
-async def open(ctx, case):
-    """Adds two numbers together."""
-    if pokemondata.all_cases[case]:
-        await ctx.send(f'GOT POKEMON = {pokemondata.all_pokemon[len(pokemondata.all_pokemon) - 1]} from {case}')
+@bot.command(name="open", aliases=['o'])
+async def open(ctx, *args):
+
+    case = ' '.join(args)
+    case.lower()
+    if case == "s":
+        case = "standard"
+
+    pokemon = choosepokemon.choose_pokemon(case)
+    
+    if pokemon["secondary_type"] != "":
+        types = pokemon["primary_type"] + "/" + pokemon["secondary_type"]
+    else:
+        types = pokemon["primary_type"]
+
+    file = discord.File(f'data/images/normal/1.png', filename="image.png")
+    embed = discord.Embed(title=f'#{pokemon["id"]} — {pokemon["name"]}',colour=discord.Colour.random())
+    embed.set_thumbnail(url="attachment://image.png")
+    embed.add_field(name="", value=f'**Type:** {types} \n **Total IV:** {pokemon["iv_total"]}% \n **Worth:** {pokemon["worth"]}pbc', inline=False)
+    await ctx.send(file=file, embed=embed)
+
+@open.error
+async def on_open_error(ctx, error):
+    if isinstance(error, commands.CommandInvokeError):
+        await ctx.send("An unknown error has occured.")
 
 
 bot.run(TOKEN.TOKEN)
