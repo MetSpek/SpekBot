@@ -6,7 +6,7 @@ all_cases = {}
 
 cases_to_fill = [["standard", ""],["gen", 1]]
 
-with open("data\data.csv", encoding='utf-8-sig') as file:
+with open("Pokemon\data.csv", encoding='utf-8-sig') as file:
   csvreader = csv.reader(file)
   for row in csvreader:
     pokemon = {

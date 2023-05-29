@@ -2,10 +2,11 @@
 
 import discord
 from discord.ext import commands
-import random
-import data.pokemondata as pokemondata
 import data.token as TOKEN
-import data.choosepokemon as choosepokemon
+import io
+import aiohttp
+
+import Pokemon.pokemon as pokemon
 
 description = '''An example bot to showcase the discord.ext.commands extension
 module.
@@ -24,32 +25,16 @@ async def on_ready():
     print(bot.command_prefix)
     print('------')
 
-
 @bot.command(name="open", aliases=['o'])
+@commands.cooldown(1, 3, commands.BucketType.user)
 async def open(ctx, *args):
-
-    case = ' '.join(args)
-    case.lower()
-    if case == "s":
-        case = "standard"
-
-    pokemon = choosepokemon.choose_pokemon(case)
-    
-    if pokemon["secondary_type"] != "":
-        types = pokemon["primary_type"] + "/" + pokemon["secondary_type"]
-    else:
-        types = pokemon["primary_type"]
-
-    file = discord.File(f'data/images/normal/1.png', filename="image.png")
-    embed = discord.Embed(title=f'#{pokemon["id"]} — {pokemon["name"]}',colour=discord.Colour.random())
-    embed.set_thumbnail(url="attachment://image.png")
-    embed.add_field(name="", value=f'**Type:** {types} \n **Total IV:** {pokemon["iv_total"]}% \n **Worth:** {pokemon["worth"]}pbc', inline=False)
-    await ctx.send(file=file, embed=embed)
+    await pokemon.openCase(ctx, *args)
 
 @open.error
 async def on_open_error(ctx, error):
     if isinstance(error, commands.CommandInvokeError):
         await ctx.send("An unknown error has occured.")
-
+    if isinstance(error, commands.CommandOnCooldown):
+	    await ctx.send(f"You have to wait {round(error.retry_after, 2)} seconds to open another case")
 
 bot.run(TOKEN.TOKEN)
