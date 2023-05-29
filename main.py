@@ -1,16 +1,11 @@
-# This example requires the 'members' and 'message_content' privileged intents to function.
-
 import discord
 from discord.ext import commands
 import data.token as TOKEN
 import io
-import aiohttp
+import asyncio
+import os
 
-import Pokemon.pokemon as pokemon
-
-description = '''An example bot to showcase the discord.ext.commands extension
-module.
-There are a number of utility commands being showcased here.'''
+description = '''All spek bot commands'''
 
 
 intents = discord.Intents.default()
@@ -25,16 +20,22 @@ async def on_ready():
     print(bot.command_prefix)
     print('------')
 
-@bot.command(name="open", aliases=['o'])
-@commands.cooldown(1, 3, commands.BucketType.user)
-async def open(ctx, *args):
-    await pokemon.openCase(ctx, *args)
+async def load():
+    for filename in os.listdir('./cogs'):
+        if filename.endswith('.py'):
+            await bot.load_extension(f'cogs.{filename[:-3]}')
 
-@open.error
-async def on_open_error(ctx, error):
-    if isinstance(error, commands.CommandInvokeError):
-        await ctx.send("An unknown error has occured.")
-    if isinstance(error, commands.CommandOnCooldown):
-	    await ctx.send(f"You have to wait {round(error.retry_after, 2)} seconds to open another case")
+async def main():
+    await load()
+    bot.help_command = NewHelp()
+    await bot.start(TOKEN.TOKEN)
 
-bot.run(TOKEN.TOKEN)
+class NewHelp(commands.MinimalHelpCommand):
+    async def send_pages(self):
+        destination = self.get_destination()
+        for page in self.paginator.pages:
+            emby = discord.Embed(description=page)
+            await destination.send(embed=emby)
+
+
+asyncio.run(main())
