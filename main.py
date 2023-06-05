@@ -1,24 +1,31 @@
 import discord
 from discord.ext import commands
+from discord import app_commands
+from discord.ext.commands import check, Context
 import data.token as TOKEN
 import io
 import asyncio
 import os
-
-description = '''All spek bot commands'''
-
+import json 
 
 intents = discord.Intents.default()
 intents.members = True
 intents.message_content = True
 
-bot = commands.Bot(command_prefix=f"<@{1095362700617461930}>" +  " ", description=description, intents=intents)
+bot = commands.Bot(command_prefix=f"<@{1095362700617461930}>" +  " ", description='''All spek bot commands''', intents=intents)
+
 
 @bot.event
 async def on_ready():
     print(f'Logged in as {bot.user} (ID: {bot.user.id})')
     print(bot.command_prefix)
     print('------')
+    try:
+        synced = await bot.tree.sync()
+        print(f"synced {len(synced)} command(s)!")
+    except Exception as e:
+        print(e)
+
 
 async def load():
     for filename in os.listdir('./cogs'):

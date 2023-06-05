@@ -1,34 +1,50 @@
 import discord
 from discord.ext import commands
+from discord import app_commands
 import random
 import numpy as np
 from scipy.signal import convolve2d
+import data.data as saveFile
 
+
+intents = discord.Intents.default()
+intents.members = True
+intents.message_content = True
+
+bot = commands.Bot(command_prefix=f"<@{1095362700617461930}>" +  " ", description='''All spek bot commands''', intents=intents)
+
+data = saveFile.data
 active_players = {}
 games = []
+rewards = {
+    "won" : 90,
+    "draw" : 20,
+    "loss" : 10
+}
 
 def add_active_player(game):
         active_players[game["player1"].id] = games.index(game)
         active_players[game["player2"].id] = games.index(game)
 
 def remove_active_player(game):
-    active_players.pop(game["player1"].id)
-    active_players.pop(game["player2"].id)
+    pass
+    # active_players.pop(game["player1"].id)
+    # active_players.pop(game["player2"].id)
 
 def show_board(game):
-        embed = discord.Embed(title=f'Connect 4!', description=f'{game["player1"].name} - :red_circle: \n {game["player2"].name} - :blue_circle:')
+        embed = discord.Embed(title=f'Connect 4!', description=f'{game["player1"].name} - :red_circle: \n {game["player2"].name} - :yellow_circle:')
         board = ""
-        embed.add_field(name="", value=f':one: :two: :three: :four: :five: :six: :seven:', inline=False)
+        embed.add_field(name="", value=f':one::two::three::four::five::six::seven:', inline=False)
         for row in game["board"]:
             line = ""
             for place in row:
                 match place:
                     case 0:
-                        line += ":black_large_square: "
+                        line += ":black_large_square:"
                     case 1:
-                        line += ":red_circle: "
+                        line += ":red_circle:"
                     case 2:
-                        line += ":blue_circle: " 
+                        line += ":yellow_circle:" 
             board += line + "\n"
         embed.add_field(name="", value=f'{board}', inline=False)
 
@@ -37,7 +53,7 @@ def show_board(game):
             case 1:
                 turn = "It's <@" + str(game["player1"].id) + ">'s :red_circle: turn!"
             case 2:
-                turn = "It's <@" + str(game["player2"].id) + ">'s :blue_circle: turn!"
+                turn = "It's <@" + str(game["player2"].id) + ">'s :yellow_circle: turn!"
         embed.add_field(name="", value=turn, inline=False)
         return embed
 
@@ -94,57 +110,80 @@ class connect4(commands.Cog):
     async def on_ready(self):
         print("Connect4 commands are online!")
 
-    @commands.command(name="c4challenge", aliases=['c4c'], description="Challenges an user to play Connect 4.")
-    async def c4challenge(self, ctx, member: discord.Member):
+    @bot.tree.command(name="c4challenge", description="Challenges a given user to play Connect 4.")
+    @app_commands.describe(member = "The user to invite")
+    async def c4challenge(self, interaction: discord.Interaction, member: discord.Member):
+        if not str(interaction.user.id) in data:
+            await interaction.response.send_message(f"You have not started with this bot. Use /arcadeStart to start with the Spek Arcade!", ephemeral=True)
+            return
+
         if member.id == 1095362700617461930:
-            raise NoBot(ctx)
-        elif ctx.message.author.id == member.id:
-            raise SameUser(ctx)
+            await interaction.response.send_message("You cannot play against the bot dummy!", ephemeral=True)
+            return
+        elif interaction.user.id == member.id:
+            pass
+            #await interaction.response.send_message("You can't play against yourself!", ephemeral=True)
+            #return
         elif member.id in active_players:
-            raise AlreadyPlaying(ctx)
+            await interaction.response.send_message("That person is already playing!", ephemeral=True)
+            return
        
         game = {
-            "player1" : ctx.message.author,
+            "player1" : interaction.user,
             "player2" : member,
             "board" : [[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0]],
             "turn": random.randint(1,2),
             "state" : "invited" 
         }
         games.append(game)
-        await ctx.send(f'<@{ctx.message.author.id}> challenged <@{member.id}>. Do you accept?')
+        await interaction.response.send_message(f'<@{interaction.user.id}> challenged <@{member.id}>. Do you accept? Use /c4accept to accept the challenge.')
     
-    @commands.command(name="c4accept", aliases=['c4a'], description="Accepts the challenge given by another user.")
-    async def c4accept(self, ctx):
+    @bot.tree.command(name="c4accept", description="Accepts the challenge given by an user")
+    async def c4accept(self, interaction: discord.Interaction):
+        if not str(interaction.user.id) in data:
+            await interaction.response.send_message(f"You have not started with this bot. Use /arcadeStart to start with the Spek Arcade!", ephemeral=True)
+            return
+
         if games == []:
-            raise NotInvited(ctx)
+            await interaction.response.send_message(f"You are not invited to any game.", ephemeral=True)
+            return
         for game in games:
-            if game["player2"].id == ctx.message.author.id:
+            if game["player2"].id == interaction.user.id:
                 game["state"] = "started"
                 add_active_player(game)
-                await ctx.send(f'<@{ctx.message.author.id}> accepted the challenge from <@{game["player1"].id}>!')
                 embed = show_board(game)
-                await ctx.send(embed=embed)
+                await interaction.response.send_message(f'<@{interaction.user.id}> accepted the challenge from <@{game["player1"].id}>!', embed=embed)
             else:
-                raise NotInvited(ctx)
+                await interaction.response.send_message(f"You are not invited to any game.", ephemeral=True)
+                return
     
-    @commands.command(name="c4drop", aliases=['c4d'], description="Drops a token on the given column while it's your turn.")
-    async def c4drop(self, ctx, column):
-        if not ctx.message.author.id in active_players:
-            raise NoGame(ctx)
+    @bot.tree.command(name="c4drop", description="Drops a token on the given column while it's your turn.")
+    @app_commands.describe(column = "The column to drop your token")
+    async def c4drop(self, interaction: discord.Interaction, column : str):
+        if not str(interaction.user.id) in data:
+            await interaction.response.send_message(f"You have not started with this bot. Use /arcadeStart to start with the Spek Arcade!", ephemeral=True)
+            return
+
+        if not interaction.user.id in active_players:
+            await interaction.response.send_message(f'You are not in any game.', ephemeral=True)
+            return
         
         if int(column) <= 0 or int(column) >= 8:
-            raise NoValidSpot(ctx)
+            await interaction.response.send_message(f'Please select a valid spot.', ephemeral=True)
+            return
 
-        game_id = active_players[ctx.message.author.id]
+        game_id = active_players[interaction.user.id]
         game = games[game_id]
 
         match game["turn"]:
             case 1:
-                if ctx.message.author.id != game["player1"].id:
-                    raise NotYourTurn(ctx)
+                if interaction.user.id != game["player1"].id:
+                    await interaction.response.send_message(f"It's not your turn yet.", ephemeral=True)
+                    return
             case 2:
-                if ctx.message.author.id != game["player2"].id:
-                    raise NotYourTurn(ctx)
+                if interaction.user.id != game["player2"].id:
+                    await interaction.response.send_message(f"It's not your turn yet.", ephemeral=True)
+                    return
 
         board = game["board"]
  
@@ -162,21 +201,25 @@ class connect4(commands.Cog):
                     board[row - 1][column_id] = player_token
                     break
                 else:
-                    raise ColumnFull(ctx)
+                    await interaction.response.send_message(f"That column is full. Please select another one.", ephemeral=True)
+                    return
 
         if check_win(game) == 1:
             game["turn"] = 3
             embed = show_board(game)
-            await ctx.send(embed=embed)
-            await ctx.send(f'<@{ctx.message.author.id}> won, GG!')
+            data[str(game["player1"].id)]['balance'] += rewards["loss"]
+            data[str(game["player1"].id)]['balance'] += rewards["loss"]
+            data[str(interaction.user.id)]['balance'] += rewards["won"]
+            await interaction.response.send_message(f'<@{interaction.user.id}> won and got {rewards["won"]} SpekCoins, GG!', embed=embed)
             games.remove(game)
             remove_active_player(game)
             return
         elif check_win(game) == 3:
             game["turn"] = 3
             embed = show_board(game)
-            await ctx.send(embed=embed)
-            await ctx.send(f"It's a draw!")
+            data[str(game["player1"].id)]['balance'] += rewards["draw"]
+            data[str(game["player1"].id)]['balance'] += rewards["draw"]
+            await interaction.response.send_message(f"It's a draw!", embed=embed)
             games.remove(game)
             remove_active_player(game)
             return
@@ -187,82 +230,23 @@ class connect4(commands.Cog):
             game["turn"] = 1
 
         embed = show_board(game)
-        await ctx.send(embed=embed)
+        await interaction.response.send_message(embed=embed)
 
         
     @c4challenge.error
-    async def on_c4challenge_error(self, ctx, error):
-        if isinstance(error, commands.CommandInvokeError):
-            await ctx.send("An internal error has occured.")
-        if isinstance(error, NoBot):
-            await ctx.send("You cannot play against the bot dummy!")
+    async def on_c4challenge_error(self, interaction, error):
         if isinstance(error, commands.UserNotFound):
-            await ctx.send("User not found.")
-        if isinstance(error, SameUser):
-            await ctx.send("You can't play against yourself!")
-        if isinstance(error, AlreadyPlaying):
-            await ctx.send("That person is already playing!")
+            await interaction.response.send_message("User not found.", ephemeral=True)
+        else:
+            await interaction.response.send_message("An internal error has occured. Please contact the developer", ephemeral=True)
 
     @c4accept.error
-    async def on_c4accept_error(self, ctx, error):
-        if isinstance(error, commands.CommandInvokeError):
-            await ctx.send("An internal error has occured.")
-        if isinstance(error, NotInvited):
-            await ctx.send(f'<@{ctx.message.author.id}>, you are not invited to any game.')
+    async def on_c4accept_error(self, interaction, error):
+        await interaction.response.send_message("An internal error has occured. Please contact the developer", ephemeral=True)
 
     @c4drop.error
-    async def on_c4drop_error(self, ctx, error):
-        if isinstance(error, commands.CommandInvokeError):
-            await ctx.send("An internal error has occured.")
-        if isinstance(error, NoGame):
-            await ctx.send(f'<@{ctx.message.author.id}>, you are not in any game.')
-        if isinstance(error, NoValidSpot):
-            await ctx.send(f'<@{ctx.message.author.id}>, please select a valid spot.')
-        if isinstance(error, NotYourTurn):
-            await ctx.send(f"<@{ctx.message.author.id}>, it's not your turn yet.")
-        if isinstance(error, ColumnFull):
-            await ctx.send(f"<@{ctx.message.author.id}>, that column is full. Please select another one.")
-
-class NoBot(commands.CommandError):
-    def __init__(self, server, *args, **kwargs):
-        self.server = server
-        super().__init__(*args, **kwargs)
-
-class SameUser(commands.CommandError):
-    def __init__(self, server, *args, **kwargs):
-        self.server = server
-        super().__init__(*args, **kwargs)
-
-class AlreadyPlaying(commands.CommandError):
-    def __init__(self, server, *args, **kwargs):
-        self.server = server
-        super().__init__(*args, **kwargs)
-
-
-class NotInvited(commands.CommandError):
-    def __init__(self, server, *args, **kwargs):
-        self.server = server
-        super().__init__(*args, **kwargs)
-
-class NoGame(commands.CommandError):
-    def __init__(self, server, *args, **kwargs):
-        self.server = server
-        super().__init__(*args, **kwargs)
-
-class NoValidSpot(commands.CommandError):
-    def __init__(self, server, *args, **kwargs):
-        self.server = server
-        super().__init__(*args, **kwargs)
-
-class NotYourTurn(commands.CommandError):
-    def __init__(self, server, *args, **kwargs):
-        self.server = server
-        super().__init__(*args, **kwargs)
-
-class ColumnFull(commands.CommandError):
-    def __init__(self, server, *args, **kwargs):
-        self.server = server
-        super().__init__(*args, **kwargs)
+    async def on_c4drop_error(self, interaction, error):
+        await interaction.response.send_message("An internal error has occured.")
 
 async def setup(bot):
     await bot.add_cog(connect4(bot))
