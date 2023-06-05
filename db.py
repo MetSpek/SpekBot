@@ -1,10 +1,11 @@
 import mysql.connector
+import data.token as TOKEN
 
 mydb = mysql.connector.connect(
-    host='localhost',
-    user='root',
-    password='',
-    database='spekbotdb'
+    host=TOKEN.DBH,
+    user=TOKEN.DBU,
+    password=TOKEN.DBPW,
+    database=TOKEN.DB
 )
 
 
