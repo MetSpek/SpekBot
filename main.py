@@ -14,6 +14,10 @@ intents.message_content = True
 
 bot = commands.Bot(command_prefix=f"<@{1095362700617461930}>" +  " ", description='''All spek bot commands''', intents=intents)
 
+cogs_list = [
+    'user',
+    'connect4', 
+]
 
 @bot.event
 async def on_ready():
@@ -23,17 +27,13 @@ async def on_ready():
     try:
         synced = await bot.tree.sync()
         print(f"synced {len(synced)} command(s)!")
+        print("!!!DO NOT FORGET TO START THE WAMPSERVER!!!")
     except Exception as e:
         print(e)
 
-
-async def load():
-    for filename in os.listdir('./cogs'):
-        if filename.endswith('.py'):
-            await bot.load_extension(f'cogs.{filename[:-3]}')
-
 async def main():
-    await load()
+    for cog in cogs_list:
+        await bot.load_extension(f'cogs.{cog}')
     bot.help_command = NewHelp()
     await bot.start(TOKEN.TOKEN)
 

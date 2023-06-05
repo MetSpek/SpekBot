@@ -4,7 +4,7 @@ from discord import app_commands
 import random
 import numpy as np
 from scipy.signal import convolve2d
-import data.data as saveFile
+import db as db
 
 
 intents = discord.Intents.default()
@@ -13,11 +13,10 @@ intents.message_content = True
 
 bot = commands.Bot(command_prefix=f"<@{1095362700617461930}>" +  " ", description='''All spek bot commands''', intents=intents)
 
-data = saveFile.data
 active_players = {}
 games = []
 rewards = {
-    "won" : 90,
+    "win" : 100,
     "draw" : 20,
     "loss" : 10
 }
@@ -27,9 +26,9 @@ def add_active_player(game):
         active_players[game["player2"].id] = games.index(game)
 
 def remove_active_player(game):
-    pass
-    # active_players.pop(game["player1"].id)
-    # active_players.pop(game["player2"].id)
+    active_players.pop(game["player1"].id)
+    if game["player2"].id in active_players:
+        active_players.pop(game["player2"].id)
 
 def show_board(game):
         embed = discord.Embed(title=f'Connect 4!', description=f'{game["player1"].name} - :red_circle: \n {game["player2"].name} - :yellow_circle:')
@@ -102,6 +101,21 @@ def check_win(game):
         return 3
     return 0
 
+def give_rewards(game, id, type):
+
+    match type:
+        case "win/loss":
+            if game["player1"].id == id:
+                db.giveCoins(game["player1"].id, rewards["win"])
+                db.giveCoins(game["player2"].id, rewards["loss"])
+            else:
+                db.giveCoins(game["player1"].id, rewards["loss"])
+                db.giveCoins(game["player2"].id, rewards["win"])
+        case "draw":
+            db.giveCoins(game["player1"].id, rewards["draw"])
+            db.giveCoins(game["player2"].id, rewards["draw"])
+
+
 class connect4(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -113,7 +127,7 @@ class connect4(commands.Cog):
     @bot.tree.command(name="c4challenge", description="Challenges a given user to play Connect 4.")
     @app_commands.describe(member = "The user to invite")
     async def c4challenge(self, interaction: discord.Interaction, member: discord.Member):
-        if not str(interaction.user.id) in data:
+        if not db.userExists(interaction.user.id):
             await interaction.response.send_message(f"You have not started with this bot. Use /arcadeStart to start with the Spek Arcade!", ephemeral=True)
             return
 
@@ -140,7 +154,7 @@ class connect4(commands.Cog):
     
     @bot.tree.command(name="c4accept", description="Accepts the challenge given by an user")
     async def c4accept(self, interaction: discord.Interaction):
-        if not str(interaction.user.id) in data:
+        if not db.userExists(interaction.user.id):
             await interaction.response.send_message(f"You have not started with this bot. Use /arcadeStart to start with the Spek Arcade!", ephemeral=True)
             return
 
@@ -160,7 +174,7 @@ class connect4(commands.Cog):
     @bot.tree.command(name="c4drop", description="Drops a token on the given column while it's your turn.")
     @app_commands.describe(column = "The column to drop your token")
     async def c4drop(self, interaction: discord.Interaction, column : str):
-        if not str(interaction.user.id) in data:
+        if not db.userExists(interaction.user.id):
             await interaction.response.send_message(f"You have not started with this bot. Use /arcadeStart to start with the Spek Arcade!", ephemeral=True)
             return
 
@@ -174,7 +188,6 @@ class connect4(commands.Cog):
 
         game_id = active_players[interaction.user.id]
         game = games[game_id]
-
         match game["turn"]:
             case 1:
                 if interaction.user.id != game["player1"].id:
@@ -205,23 +218,22 @@ class connect4(commands.Cog):
                     return
 
         if check_win(game) == 1:
+            print("SOMEONE WON")
             game["turn"] = 3
             embed = show_board(game)
-            data[str(game["player1"].id)]['balance'] += rewards["loss"]
-            data[str(game["player1"].id)]['balance'] += rewards["loss"]
-            data[str(interaction.user.id)]['balance'] += rewards["won"]
-            await interaction.response.send_message(f'<@{interaction.user.id}> won and got {rewards["won"]} SpekCoins, GG!', embed=embed)
-            games.remove(game)
+            print(interaction.user.id)
+            await interaction.response.send_message(f'<@{interaction.user.id}> won and got {rewards["win"]} SpekCoins, GG!', embed=embed)
+            give_rewards(game, interaction.user.id, "win/loss")
             remove_active_player(game)
+            games.remove(game)
             return
         elif check_win(game) == 3:
             game["turn"] = 3
             embed = show_board(game)
-            data[str(game["player1"].id)]['balance'] += rewards["draw"]
-            data[str(game["player1"].id)]['balance'] += rewards["draw"]
+            give_rewards(game, interaction.user.id, "draw")
             await interaction.response.send_message(f"It's a draw!", embed=embed)
-            games.remove(game)
             remove_active_player(game)
+            games.remove(game)
             return
 
         if game["turn"] == 1:
@@ -229,8 +241,9 @@ class connect4(commands.Cog):
         elif game["turn"] == 2:
             game["turn"] = 1
 
-        embed = show_board(game)
-        await interaction.response.send_message(embed=embed)
+        if not game["turn"] == 3:
+            embed = show_board(game)
+            await interaction.response.send_message(embed=embed)
 
         
     @c4challenge.error
@@ -246,7 +259,7 @@ class connect4(commands.Cog):
 
     @c4drop.error
     async def on_c4drop_error(self, interaction, error):
-        await interaction.response.send_message("An internal error has occured.")
+        await interaction.response.send_message("An internal error has occured. Please contact the developer", ephemeral=True)
 
 async def setup(bot):
     await bot.add_cog(connect4(bot))
