@@ -21,16 +21,16 @@ rewards = {
     "loss" : 10
 }
 
-def add_active_player(game):
+async def add_active_player(game):
         active_players[game["player1"].id] = games.index(game)
         active_players[game["player2"].id] = games.index(game)
 
-def remove_active_player(game):
+async def remove_active_player(game):
     active_players.pop(game["player1"].id)
     if game["player2"].id in active_players:
         active_players.pop(game["player2"].id)
 
-def show_board(game):
+async def show_board(game):
         embed = discord.Embed(title=f'Connect 4!', description=f'{game["player1"].name} - :red_circle: \n {game["player2"].name} - :yellow_circle:')
         board = ""
         embed.add_field(name="", value=f':one::two::three::four::five::six::seven:', inline=False)
@@ -56,7 +56,7 @@ def show_board(game):
         embed.add_field(name="", value=turn, inline=False)
         return embed
 
-def check_win(game):
+async def check_win(game):
     horizontal_kernel = np.array([[ 1, 1, 1, 1]])
     vertical_kernel = np.transpose(horizontal_kernel)
     diag1_kernel = np.eye(4, dtype=np.uint8)
@@ -101,19 +101,18 @@ def check_win(game):
         return 3
     return 0
 
-def give_rewards(game, id, type):
-
+async def give_rewards(game, id, type):
     match type:
         case "win/loss":
             if game["player1"].id == id:
-                db.giveCoins(game["player1"].id, rewards["win"])
-                db.giveCoins(game["player2"].id, rewards["loss"])
+                await db.giveCoins(game["player1"].id, rewards["win"])
+                await db.giveCoins(game["player2"].id, rewards["loss"])
             else:
-                db.giveCoins(game["player1"].id, rewards["loss"])
-                db.giveCoins(game["player2"].id, rewards["win"])
+                await db.giveCoins(game["player1"].id, rewards["loss"])
+                await db.giveCoins(game["player2"].id, rewards["win"])
         case "draw":
-            db.giveCoins(game["player1"].id, rewards["draw"])
-            db.giveCoins(game["player2"].id, rewards["draw"])
+            await db.giveCoins(game["player1"].id, rewards["draw"])
+            await db.giveCoins(game["player2"].id, rewards["draw"])
 
 
 class connect4(commands.Cog):
@@ -127,7 +126,7 @@ class connect4(commands.Cog):
     @bot.tree.command(name="c4challenge", description="Challenges a given user to play Connect 4.")
     @app_commands.describe(member = "The user to invite")
     async def c4challenge(self, interaction: discord.Interaction, member: discord.Member):
-        if not db.userExists(interaction.user.id):
+        if not await db.userExists(interaction.user.id):
             await interaction.response.send_message(f"You have not started with this bot. Use /arcadeStart to start with the Spek Arcade!", ephemeral=True)
             return
 
@@ -154,7 +153,7 @@ class connect4(commands.Cog):
     
     @bot.tree.command(name="c4accept", description="Accepts the challenge given by an user")
     async def c4accept(self, interaction: discord.Interaction):
-        if not db.userExists(interaction.user.id):
+        if not await db.userExists(interaction.user.id):
             await interaction.response.send_message(f"You have not started with this bot. Use /arcadeStart to start with the Spek Arcade!", ephemeral=True)
             return
 
@@ -164,8 +163,8 @@ class connect4(commands.Cog):
         for game in games:
             if game["player2"].id == interaction.user.id:
                 game["state"] = "started"
-                add_active_player(game)
-                embed = show_board(game)
+                await add_active_player(game)
+                embed = await show_board(game)
                 await interaction.response.send_message(f'<@{interaction.user.id}> accepted the challenge from <@{game["player1"].id}>!', embed=embed)
             else:
                 await interaction.response.send_message(f"You are not invited to any game.", ephemeral=True)
@@ -174,7 +173,7 @@ class connect4(commands.Cog):
     @bot.tree.command(name="c4drop", description="Drops a token on the given column while it's your turn.")
     @app_commands.describe(column = "The column to drop your token")
     async def c4drop(self, interaction: discord.Interaction, column : str):
-        if not db.userExists(interaction.user.id):
+        if not await db.userExists(interaction.user.id):
             await interaction.response.send_message(f"You have not started with this bot. Use /arcadeStart to start with the Spek Arcade!", ephemeral=True)
             return
 
@@ -217,22 +216,20 @@ class connect4(commands.Cog):
                     await interaction.response.send_message(f"That column is full. Please select another one.", ephemeral=True)
                     return
 
-        if check_win(game) == 1:
-            print("SOMEONE WON")
+        if await check_win(game) == 1:
             game["turn"] = 3
-            embed = show_board(game)
-            print(interaction.user.id)
+            embed = await show_board(game)
             await interaction.response.send_message(f'<@{interaction.user.id}> won and got {rewards["win"]} SpekCoins, GG!', embed=embed)
-            give_rewards(game, interaction.user.id, "win/loss")
-            remove_active_player(game)
+            await give_rewards(game, interaction.user.id, "win/loss")
+            await remove_active_player(game)
             games.remove(game)
             return
-        elif check_win(game) == 3:
+        elif await check_win(game) == 3:
             game["turn"] = 3
-            embed = show_board(game)
-            give_rewards(game, interaction.user.id, "draw")
+            embed = await show_board(game)
+            await give_rewards(game, interaction.user.id, "draw")
             await interaction.response.send_message(f"It's a draw!", embed=embed)
-            remove_active_player(game)
+            await remove_active_player(game)
             games.remove(game)
             return
 
@@ -242,7 +239,7 @@ class connect4(commands.Cog):
             game["turn"] = 1
 
         if not game["turn"] == 3:
-            embed = show_board(game)
+            embed = await show_board(game)
             await interaction.response.send_message(embed=embed)
 
         

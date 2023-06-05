@@ -11,12 +11,12 @@ mydb = mysql.connector.connect(
 
 cursor = mydb.cursor(dictionary=True)
 
-def createUser(id):
+async def createUser(id):
     sql = "INSERT INTO users (ID, BALANCE) VALUES (%s, %s)"
     val = (id, 0)
     cursor.execute(sql, val)
 
-def userExists(id):
+async def userExists(id):
     cursor.execute(f"SELECT * FROM users WHERE ID = {id}")
 
     rows = cursor.fetchall()
@@ -25,7 +25,7 @@ def userExists(id):
     else:
         return False
 
-def getUserStat(id):
+async def getUserStat(id):
     cursor.execute(f"SELECT * FROM users WHERE ID = {id}")
     rows = cursor.fetchall()
     if rows:
@@ -34,8 +34,8 @@ def getUserStat(id):
     else:
         return False
 
-def giveCoins(id, amount):
-    user = getUserStat(id)
+async def giveCoins(id, amount):
+    user = await getUserStat(id)
 
     sql = "UPDATE users SET BALANCE = %s WHERE ID = %s"
     val = (str(int(user['BALANCE']) + amount), id)

@@ -21,24 +21,24 @@ class user(commands.Cog):
 
     @bot.tree.command(name="arcadestart", description="Start your arcade account")
     async def arcadestart(self, interaction: discord.Interaction):
-        if db.userExists(interaction.user.id):
+        if await db.userExists(interaction.user.id):
             await interaction.response.send_message(f"You already started your arcade account!", ephemeral=True)
             return
         
-        db.createUser(interaction.user.id)
+        await db.createUser(interaction.user.id)
 
-        if db.userExists(interaction.user.id):
+        if await db.userExists(interaction.user.id):
             await interaction.response.send_message(f"You started your arcade account and now can play the games!", ephemeral=True)
         else:
             await interaction.response.send_message(f"There was an error creating your account, please try again later.", ephemeral=True)
 
     @bot.tree.command(name="arcadebalance", description="Check your balance")
     async def arcadebalance(self, interaction: discord.Interaction):
-        if not db.userExists(interaction.user.id):
+        if not await db.userExists(interaction.user.id):
             await interaction.response.send_message(f"You have not started with this bot. Use /arcadeStart to start with the Spek Arcade!", ephemeral=True)
             return
 
-        user = db.getUserStat(interaction.user.id)
+        user = await db.getUserStat(interaction.user.id)
         embed = discord.Embed(title=f"{interaction.user.name}'s balance")
         embed.set_thumbnail(url=interaction.user.avatar)
         embed.add_field(name="SpekCoins", value=f"{user['BALANCE']}", inline=False)
