@@ -36,7 +36,19 @@ async def getUserStat(id):
 
 async def giveCoins(id, amount):
     user = await getUserStat(id)
-
     sql = "UPDATE users SET BALANCE = %s WHERE ID = %s"
-    val = (str(int(user['BALANCE']) + amount), id)
+    val = (str(int(user['BALANCE']) + int(amount)), id)
     cursor.execute(sql, val)
+
+async def removeCoins(id, amount):
+    user = await getUserStat(id)
+
+    if (int(user['BALANCE']) - int(amount)) < 0:
+        return False
+    else:
+        sql = "UPDATE users SET BALANCE = %s WHERE ID = %s"
+        val = (str(int(user['BALANCE']) - amount), id)
+        cursor.execute(sql, val)
+        return True
+
+

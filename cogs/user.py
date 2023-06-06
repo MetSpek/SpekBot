@@ -1,7 +1,6 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
-import asyncio
 import db as db
 
 
@@ -41,7 +40,8 @@ class user(commands.Cog):
         user = await db.getUserStat(interaction.user.id)
         embed = discord.Embed(title=f"{interaction.user.name}'s balance")
         embed.set_thumbnail(url=interaction.user.avatar)
-        embed.add_field(name="SpekCoins", value=f"{user['BALANCE']}", inline=False)
+        balance = int(user['BALANCE'])
+        embed.add_field(name="SpekCoins", value=f"{f'{balance:,}'}", inline=False)
         await interaction.response.send_message(embed=embed)
 
 async def setup(bot):

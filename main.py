@@ -16,7 +16,8 @@ bot = commands.Bot(command_prefix=f"<@{1095362700617461930}>" +  " ", descriptio
 
 cogs_list = [
     'user',
-    'connect4', 
+    'connect4',
+    'doubleornothing' 
 ]
 
 @bot.event
