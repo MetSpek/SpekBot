@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
+from helpers import checks
 import random
 import numpy as np
 from scipy.signal import convolve2d
@@ -16,9 +17,9 @@ bot = commands.Bot(command_prefix=f"<@{1095362700617461930}>" +  " ", descriptio
 active_players = {}
 games = []
 rewards = {
-    "win" : 100,
-    "draw" : 20,
-    "loss" : 10
+    "win" : 1000,
+    "draw" : 200,
+    "loss" : 100
 }
 
 async def add_active_player(game):
@@ -123,13 +124,10 @@ class connect4(commands.Cog):
     async def on_ready(self):
         print("Connect4 commands are online!")
 
+    @checks.has_started()
     @bot.tree.command(name="c4challenge", description="Challenges a given user to play Connect 4.")
     @app_commands.describe(member = "The user to invite")
     async def c4challenge(self, interaction: discord.Interaction, member: discord.Member):
-        if not await db.userExists(interaction.user.id):
-            await interaction.response.send_message(f"You have not started with this bot. Use /arcadeStart to start with the Spek Arcade!", ephemeral=True)
-            return
-
         if member.id == 1095362700617461930:
             await interaction.response.send_message("You cannot play against the bot dummy!", ephemeral=True)
             return
@@ -151,12 +149,9 @@ class connect4(commands.Cog):
         games.append(game)
         await interaction.response.send_message(f'<@{interaction.user.id}> challenged <@{member.id}>. Do you accept? Use /c4accept to accept the challenge.')
     
+    @checks.has_started()
     @bot.tree.command(name="c4accept", description="Accepts the challenge given by an user")
     async def c4accept(self, interaction: discord.Interaction):
-        if not await db.userExists(interaction.user.id):
-            await interaction.response.send_message(f"You have not started with this bot. Use /arcadeStart to start with the Spek Arcade!", ephemeral=True)
-            return
-
         if games == []:
             await interaction.response.send_message(f"You are not invited to any game.", ephemeral=True)
             return
@@ -170,13 +165,10 @@ class connect4(commands.Cog):
                 await interaction.response.send_message(f"You are not invited to any game.", ephemeral=True)
                 return
     
+    @checks.has_started()
     @bot.tree.command(name="c4drop", description="Drops a token on the given column while it's your turn.")
     @app_commands.describe(column = "The column to drop your token")
     async def c4drop(self, interaction: discord.Interaction, column : str):
-        if not await db.userExists(interaction.user.id):
-            await interaction.response.send_message(f"You have not started with this bot. Use /arcadeStart to start with the Spek Arcade!", ephemeral=True)
-            return
-
         if not interaction.user.id in active_players:
             await interaction.response.send_message(f'You are not in any game.', ephemeral=True)
             return

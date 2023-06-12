@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 from discord.ext.commands import check, Context
+from helpers import errorhandling
 import data.token as TOKEN
 import io
 import asyncio
@@ -17,7 +18,8 @@ bot = commands.Bot(command_prefix=f"<@{1095362700617461930}>" +  " ", descriptio
 cogs_list = [
     'user',
     'connect4',
-    'doubleornothing' 
+    'doubleornothing',
+    'spekroulette' 
 ]
 
 @bot.event
@@ -32,10 +34,12 @@ async def on_ready():
     except Exception as e:
         print(e)
 
+
 async def main():
     for cog in cogs_list:
         await bot.load_extension(f'cogs.{cog}')
     bot.help_command = NewHelp()
+    bot.tree.on_error = errorhandling.on_tree_error
     await bot.start(TOKEN.TOKEN)
 
 class NewHelp(commands.MinimalHelpCommand):

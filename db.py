@@ -16,7 +16,7 @@ async def createUser(id):
     val = (id, 0)
     cursor.execute(sql, val)
 
-async def userExists(id):
+def userExists(id):
     cursor.execute(f"SELECT * FROM users WHERE ID = {id}")
 
     rows = cursor.fetchall()

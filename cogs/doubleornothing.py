@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
+from helpers import checks
 import db as db
 import random
 
@@ -9,7 +10,7 @@ intents.members = True
 intents.message_content = True
 bot = commands.Bot(command_prefix=f"<@{1095362700617461930}>" +  " ", description='''All spek bot commands''', intents=intents)
 
-costs = 10
+costs = 100
 
 active_players = {}
 
@@ -73,7 +74,6 @@ class playButton(discord.ui.View):
             return
 
         await tryDouble(interaction.user, interaction)
-        await interaction.response.send_message("HEY")
 
     @discord.ui.button(label="cash out", style=discord.ButtonStyle.red)
     async def csah(self, interaction: discord.Interaction, button: discord.Button):
@@ -97,12 +97,9 @@ class DoN(commands.Cog):
     async def on_ready(self):
         print("DoubleOrNothing commands are online!")
     
+    @checks.has_started()
     @bot.tree.command(name="doublenothing", description="Play the double or nothing game")
     async def doublenothing(self, interaction: discord.Interaction):
-        if not await db.userExists(interaction.user.id):
-            await interaction.response.send_message(f"You have not started with this bot. Use /arcadeStart to start with the Spek Arcade!", ephemeral=True)
-            return
-
         view = startButton(interaction.user.id)
         embed = discord.Embed(title=f"Double or Nothing!")
         embed.set_thumbnail(url=interaction.user.avatar)
