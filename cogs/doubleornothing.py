@@ -5,11 +5,6 @@ from helpers import checks
 import db as db
 import random
 
-intents = discord.Intents.default()
-intents.members = True
-intents.message_content = True
-bot = commands.Bot(command_prefix=f"<@{1095362700617461930}>" +  " ", description='''All spek bot commands''', intents=intents)
-
 costs = 100
 
 active_players = {}
@@ -98,7 +93,7 @@ class DoN(commands.Cog):
         print("DoubleOrNothing commands are online!")
     
     @checks.has_started()
-    @bot.tree.command(name="doublenothing", description="Play the double or nothing game")
+    @app_commands.command(name="doublenothing", description="Play the double or nothing game")
     async def doublenothing(self, interaction: discord.Interaction):
         view = startButton(interaction.user.id)
         embed = discord.Embed(title=f"Double or Nothing!")

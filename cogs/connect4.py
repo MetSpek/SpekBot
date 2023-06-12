@@ -8,12 +8,6 @@ from scipy.signal import convolve2d
 import db as db
 
 
-intents = discord.Intents.default()
-intents.members = True
-intents.message_content = True
-
-bot = commands.Bot(command_prefix=f"<@{1095362700617461930}>" +  " ", description='''All spek bot commands''', intents=intents)
-
 active_players = {}
 games = []
 rewards = {
@@ -125,7 +119,7 @@ class connect4(commands.Cog):
         print("Connect4 commands are online!")
 
     @checks.has_started()
-    @bot.tree.command(name="c4challenge", description="Challenges a given user to play Connect 4.")
+    @app_commands.command(name="c4challenge", description="Challenges a given user to play Connect 4.")
     @app_commands.describe(member = "The user to invite")
     async def c4challenge(self, interaction: discord.Interaction, member: discord.Member):
         if member.id == 1095362700617461930:
@@ -150,7 +144,7 @@ class connect4(commands.Cog):
         await interaction.response.send_message(f'<@{interaction.user.id}> challenged <@{member.id}>. Do you accept? Use /c4accept to accept the challenge.')
     
     @checks.has_started()
-    @bot.tree.command(name="c4accept", description="Accepts the challenge given by an user")
+    @app_commands.command(name="c4accept", description="Accepts the challenge given by an user")
     async def c4accept(self, interaction: discord.Interaction):
         if games == []:
             await interaction.response.send_message(f"You are not invited to any game.", ephemeral=True)
@@ -166,7 +160,7 @@ class connect4(commands.Cog):
                 return
     
     @checks.has_started()
-    @bot.tree.command(name="c4drop", description="Drops a token on the given column while it's your turn.")
+    @app_commands.command(name="c4drop", description="Drops a token on the given column while it's your turn.")
     @app_commands.describe(column = "The column to drop your token")
     async def c4drop(self, interaction: discord.Interaction, column : str):
         if not interaction.user.id in active_players:

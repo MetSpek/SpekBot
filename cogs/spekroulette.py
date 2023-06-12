@@ -6,12 +6,6 @@ import db as db
 import random
 import time
 
-
-
-intents = discord.Intents.all()
-bot = commands.Bot(command_prefix="!",intents=intents)
-
-
 active_players = {}
 games = []
 
@@ -21,7 +15,7 @@ class gameButton(discord.ui.View):
         self.game = game
         super().__init__()
     
-    @discord.ui.button(label="start", style=discord.ButtonStyle.gray)
+    @discord.ui.button(label="start", style=discord.ButtonStyle.green)
     async def start(self, interaction: discord.Interaction, button: discord.Button):
         if self.user != interaction.user.id:
             await interaction.response.send_message("You are not the owner of this instance!", ephemeral=True)
@@ -29,8 +23,8 @@ class gameButton(discord.ui.View):
 
         await interaction.response.send_message(f"Start game: {self.game}")
     
-    discord.ui.button(label="join", style=discord.ButtonStyle.green)
-    async def start(self, interaction: discord.Interaction, button: discord.Button):
+    @discord.ui.button(label="join", style=discord.ButtonStyle.blurple)
+    async def join(self, interaction: discord.Interaction, button: discord.Button):
         await interaction.response.send_message(f"Join game: {self.game}")
 
 class spekRoulette(commands.Cog):
@@ -42,7 +36,7 @@ class spekRoulette(commands.Cog):
         print("SpekRoulette commands are online!")
     
     @checks.has_started()
-    @bot.tree.command(name="spekroulette", description="Play Spek Roulette!")
+    @app_commands.command(name="spekroulette", description="Play Spek Roulette!")
     async def spekroulette(self, interaction: discord.Interaction):
         game = {
             "id" : hex(int(str(interaction.user.id) + str(int(time.time())))),
@@ -57,5 +51,11 @@ class spekRoulette(commands.Cog):
         embed.set_footer(text=f"ID: {game['id']}")
         await interaction.response.send_message(embed=embed, view=view)
     
+    @checks.has_started()
+    @app_commands.command(name="spektest", description="test")
+    async def spektest(self, interaction: discord.Interaction):
+        await interaction.response.send_message("THIS SHOULD ONLY BE IN THE TEST SERVER")
+
+
 async def setup(bot):
     await bot.add_cog(spekRoulette(bot))
