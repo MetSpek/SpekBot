@@ -9,11 +9,37 @@ import time
 active_players = {}
 games = []
 
+async def find_game(id):
+    for game in games:
+        if game['id'] == id:
+            return game
+
+async def lobby_embed(game):
+    embed = discord.Embed(title=f'Spek Roulette!')
+    playerList = ''
+    for player in game['players']:
+        playerList += f'- {player.name}\n'
+    embed.add_field(name='Current Players:', value=f'{playerList}')
+    embed.set_footer(text=f"ID: {game['id']}")
+    return embed
+
 class gameButton(discord.ui.View):
     def __init__(self, user, game):
         self.user = user
         self.game = game
         super().__init__()
+    
+    
+    @discord.ui.button(label="join", style=discord.ButtonStyle.blurple)
+    async def join(self, interaction: discord.Interaction, button: discord.Button):
+        game = await find_game(self.game)
+        # if interaction.user in game['players']:
+        #     await interaction.response.send_message("You are already playing in this instance!", ephemeral=True)
+        #     return
+        game['players'].append(interaction.user)
+        view = gameButton(self.user, game["id"])
+        embed = await lobby_embed(game)
+        await interaction.response.edit_message(embed=embed, view=view)
     
     @discord.ui.button(label="start", style=discord.ButtonStyle.green)
     async def start(self, interaction: discord.Interaction, button: discord.Button):
@@ -21,11 +47,9 @@ class gameButton(discord.ui.View):
             await interaction.response.send_message("You are not the owner of this instance!", ephemeral=True)
             return
 
-        await interaction.response.send_message(f"Start game: {self.game}")
-    
-    @discord.ui.button(label="join", style=discord.ButtonStyle.blurple)
-    async def join(self, interaction: discord.Interaction, button: discord.Button):
-        await interaction.response.send_message(f"Join game: {self.game}")
+        game = await find_game(self.game)
+        game['state'] = "started"
+        await interaction.response.send_message(f"Start game: {game}")
 
 class spekRoulette(commands.Cog):
     def __init__(self, bot):
@@ -46,15 +70,8 @@ class spekRoulette(commands.Cog):
 
         games.append(game)
         view = gameButton(interaction.user.id, game["id"])
-        embed = discord.Embed(title=f"Spek Roulette!")
-        embed.add_field(name="Current Players:", value=f"- {interaction.user.name}")
-        embed.set_footer(text=f"ID: {game['id']}")
+        embed = await lobby_embed(game)
         await interaction.response.send_message(embed=embed, view=view)
-    
-    @checks.has_started()
-    @app_commands.command(name="spektest", description="test")
-    async def spektest(self, interaction: discord.Interaction):
-        await interaction.response.send_message("THIS SHOULD ONLY BE IN THE TEST SERVER")
 
 
 async def setup(bot):

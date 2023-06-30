@@ -3,7 +3,7 @@ from discord.ext import commands
 from discord import app_commands
 from helpers import checks
 import db as db
-from typing import Literal, Optional
+
 
 class user(commands.Cog):
     def __init__(self, bot):
@@ -23,7 +23,7 @@ class user(commands.Cog):
         await db.createUser(interaction.user.id)
 
         if db.userExists(interaction.user.id):
-            await interaction.response.send_message(f"You started your arcade account and now can play the games!", ephemeral=True)
+            await interaction.response.send_message(f"You started your arcade account and now you can play the games!", ephemeral=True)
         else:
             await interaction.response.send_message(f"There was an error creating your account, please try again later.", ephemeral=True)
 
