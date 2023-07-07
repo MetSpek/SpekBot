@@ -5,6 +5,7 @@ from helpers import checks
 import db as db
 
 
+
 class user(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -20,7 +21,7 @@ class user(commands.Cog):
             await interaction.response.send_message(f"You already started your arcade account!", ephemeral=True)
             return
         
-        await db.createUser(interaction.user.id)
+        await db.createUser(interaction.user)
 
         if db.userExists(interaction.user.id):
             await interaction.response.send_message(f"You started your arcade account and now you can play the games!", ephemeral=True)

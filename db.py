@@ -1,5 +1,6 @@
 import mysql.connector
 import data.token as TOKEN
+import json
 
 mydb = mysql.connector.connect(
     host=TOKEN.DBH,
@@ -11,9 +12,9 @@ mydb = mysql.connector.connect(
 
 cursor = mydb.cursor(dictionary=True)
 
-async def createUser(id):
-    sql = "INSERT INTO users (ID, BALANCE) VALUES (%s, %s)"
-    val = (id, 0)
+async def createUser(user):
+    sql = "INSERT INTO users (ID, NAME, BALANCE) VALUES (%s, %s, %s)"
+    val = (user.id, user.name + '#' + str(user.discriminator), 0)
     cursor.execute(sql, val)
 
 def userExists(id):
@@ -39,6 +40,14 @@ async def giveCoins(id, amount):
     sql = "UPDATE users SET BALANCE = %s WHERE ID = %s"
     val = (str(int(user['BALANCE']) + int(amount)), id)
     cursor.execute(sql, val)
+
+
+async def checkCoins(id, amount):
+    user = await getUserStat(id)
+    if (int(user['BALANCE']) - int(amount)) < 0:
+            return False
+    else:
+        return True
 
 async def removeCoins(id, amount):
     user = await getUserStat(id)

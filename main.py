@@ -7,6 +7,7 @@ import data.token as TOKEN
 import io
 import asyncio
 from typing import Literal, Optional
+import db as db
 
 intents = discord.Intents.default()
 
@@ -79,5 +80,16 @@ async def sync(ctx: commands.Context, guilds: commands.Greedy[discord.Object], s
 
     await ctx.send(f"Synced the tree to {ret}/{len(guilds)}.")
 
+@bot.command()
+@commands.is_owner()
+async def gsc(ctx: commands.Context, account: int, amount: int):
+    print(account)
+    user = await bot.fetch_user(account)
+    if db.userExists(account):
+        await db.giveCoins(account, amount)
+        print(user)
+        await ctx.send(f'Gave **{user}** {amount} SpekCoins')
+    else:
+        await ctx.send(f'{user} has no account')
 
 asyncio.run(main())

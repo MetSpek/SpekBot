@@ -98,7 +98,7 @@ class DoN(commands.Cog):
         view = startButton(interaction.user.id)
         embed = discord.Embed(title=f"Double or Nothing!")
         embed.set_thumbnail(url=interaction.user.avatar)
-        embed.add_field(name="How to play?", value=f"When you click the 'start' button, you pay {costs} SpekCoins and start with a value of 10 and can choose to try to double it and have a chnce to lose all. Use the 'check out' button to checkout the current value", inline=False)
+        embed.add_field(name="How to play?", value=f"When you click the 'start' button, you pay {costs} SpekCoins and start with a value of 10 and can choose to try to double it and have a chance to lose all. Use the 'check out' button to checkout the current value", inline=False)
         embed.add_field(name="Price:", value="100 SpekCoins")
         await interaction.response.send_message(embed=embed, view=view)
 
