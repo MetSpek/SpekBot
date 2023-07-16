@@ -14,7 +14,7 @@ cursor = mydb.cursor(dictionary=True)
 
 async def createUser(user):
     sql = "INSERT INTO users (ID, NAME, BALANCE) VALUES (%s, %s, %s)"
-    val = (user.id, user.name + '#' + str(user.discriminator), 0)
+    val = (user.id, user.name + '#' + str(user.discriminator), 100)
     cursor.execute(sql, val)
 
 def userExists(id):
@@ -60,4 +60,13 @@ async def removeCoins(id, amount):
         cursor.execute(sql, val)
         return True
 
+async def checkDailySpekPot(id):
+    user = await getUserStat(id)
+    return int(user['DAILYSPEKPOTAMOUNT'])
 
+async def setDailySpekPot(id):
+    user = await getUserStat(id)
+
+    sql = "UPDATE users SET DAILYSPEKPOTAMOUNT = %s WHERE ID = %s"
+    val = (str(int(user['DAILYSPEKPOTAMOUNT']) - 1), id)
+    cursor.execute(sql, val)

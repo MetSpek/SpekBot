@@ -51,14 +51,10 @@ async def handle_shoot(game, interaction):
         await update_game(game)
         return True
     else:
-        print("shooter should die")
         for player in game['alive_players']:
             if(player == game['current_shooter']):
-                print(player)
-                print(game['players'])
                 await update_game(game)
                 game['alive_players'].remove(player)
-                print(game['players'])
                 await check_win(game, interaction, player)
                 break
         
@@ -80,7 +76,6 @@ async def update_game(game):
     else:
         current_index += 1
     game['current_shooter'] = game['alive_players'][current_index]
-    print(f'new player: {game["current_shooter"]}')
 
 
 class lobbyButton(discord.ui.View):
@@ -89,7 +84,7 @@ class lobbyButton(discord.ui.View):
         self.game = game
         super().__init__()
     
-    
+    @checks.has_started()
     @discord.ui.button(label="join", style=discord.ButtonStyle.blurple)
     async def join(self, interaction: discord.Interaction, button: discord.Button):
         game = await find_game(self.game)
@@ -144,6 +139,10 @@ class lobbyButton(discord.ui.View):
     
     @discord.ui.button(label="cancel", style=discord.ButtonStyle.red)
     async def cancel(self, interaction: discord.Interaction, button: discord.Button):
+        if self.user != interaction.user.id:
+            await interaction.response.send_message("You are not the owner of this instance!", ephemeral=True)
+            return
+
         embed = discord.Embed(title=f'Spek Roulette!')
         embed.add_field(name='Match Cancelled...', value='')
         await interaction.response.edit_message(embed=embed, view=None)

@@ -17,7 +17,8 @@ cogs_list = [
     'user',
     'connect4',
     'doubleornothing',
-    'spekroulette' 
+    'spekroulette' ,
+    'dailyspekpot'
 ]
 
 @bot.event
@@ -82,13 +83,13 @@ async def sync(ctx: commands.Context, guilds: commands.Greedy[discord.Object], s
 
 @bot.command()
 @commands.is_owner()
-async def gsc(ctx: commands.Context, account: int, amount: int):
-    print(account)
+async def admin(ctx: commands.Context, action: str, account: int, amount: int):
     user = await bot.fetch_user(account)
     if db.userExists(account):
-        await db.giveCoins(account, amount)
-        print(user)
-        await ctx.send(f'Gave **{user}** {amount} SpekCoins')
+        match action:
+            case 'gsc':
+                await db.giveCoins(account, amount)
+                await ctx.send(f'Gave **{user}** {amount} SpekCoins')
     else:
         await ctx.send(f'{user} has no account')
 

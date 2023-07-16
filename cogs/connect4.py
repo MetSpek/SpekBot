@@ -138,7 +138,7 @@ class connect4(commands.Cog):
             "player2" : member,
             "board" : [[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0]],
             "turn": random.randint(1,2),
-            "state" : "invited" 
+            "state" : "invited", 
         }
         games.append(game)
         await interaction.response.send_message(f'<@{interaction.user.id}> challenged <@{member.id}>. Do you accept? Use /c4accept to accept the challenge.')
@@ -195,7 +195,7 @@ class connect4(commands.Cog):
                 board[row][column_id] = player_token
                 break
             elif board[row][column_id] != 0:
-                if row - 1 > 0:
+                if row > 0:
                     board[row - 1][column_id] = player_token
                     break
                 else:
