@@ -18,7 +18,8 @@ cogs_list = [
     'connect4',
     'doubleornothing',
     'spekroulette' ,
-    'dailyspekpot'
+    'dailyspekpot',
+    'misc'
 ]
 
 @bot.event

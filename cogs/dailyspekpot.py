@@ -49,7 +49,7 @@ class dailyspekpot(commands.Cog):
             return
 
         embed = await lobbyEmbed(interaction.user)
-        await interaction.response.send_message(embed=embed[0], view=embed[1], ephemeral=True)
+        await interaction.response.send_message(embed=embed[0], view=embed[1])
 
 async def setup(bot):
     await bot.add_cog(dailyspekpot(bot))
